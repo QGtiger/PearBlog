@@ -201,8 +201,10 @@
     methods: {
       toggleType() {
         if(this.currentType === 'login') {
+          this.$refs.loginForm.clearValidate()
           this.currentType = 'register'
         }else {
+          this.$refs.registerForm.clearValidate()
           this.currentType = 'login'
         }
       },
