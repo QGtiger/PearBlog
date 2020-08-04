@@ -1,0 +1,14 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  min-width: 100vw;
+  min-height: 100vh;
+}
+
+.el-button--primary {
+  background-color: #534b92 !important;
+  border-color: #534b92 !important;
+}
