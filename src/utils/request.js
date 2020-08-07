@@ -18,7 +18,7 @@ service.interceptors.response.use(res => {
   if (status === 401) {
     router.push('/login')
   }
-  return res
+  return res.data
 })
 
 export default service;

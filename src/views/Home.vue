@@ -1,19 +1,17 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <el-button type="primary" @click="handleTest">test</el-button>
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="home-page-wrap">
+    <div class="banner-cont">
+
+    </div>
   </div>
 </template>
 
 <script>
 // @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue'
 
 export default {
   name: 'Home',
   components: {
-    HelloWorld
   },
   data () {
     return {
@@ -30,3 +28,16 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scope>
+.banner-cont {
+  height: 600px;
+  background-image: url('../assets/images/shouye/banner1.jpg');
+  background-size: cover;
+  background-position:center;
+  background-repeat: no-repeat;
+  position: relative;
+  top: -100px;
+  z-index: -1;
+}
+</style>

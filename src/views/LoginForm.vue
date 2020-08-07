@@ -15,7 +15,7 @@
                 <span @click="toggleType">{{extraMetaText[currentType]}}</span>
               </div>
             </div>
-            <div class="login-form-cont" v-show="currentType==='login'">
+            <div class="login-form-cont" v-if="currentType==='login'">
               <el-form :model="loginForm" ref="loginForm"  label-position="right"
                 :rules="loginFormRules"
               >
@@ -84,7 +84,7 @@
                     ></qg-input>
                   </qg-form-item>
                 </el-form-item>
-                <el-form-item prop="gender">
+                <!-- <el-form-item prop="gender">
                   <qg-form-item
                     labelText="GENDER"
                     :isRequired="true"
@@ -94,7 +94,7 @@
                     <el-radio label=0>FEMALE</el-radio>
                   </el-radio-group>
                   </qg-form-item>
-                </el-form-item>
+                </el-form-item> -->
                 <el-form-item>
                   <el-button type="primary" @click="handleRegisterSubmit" style="width:100%">Sign Up</el-button>
                 </el-form-item>
@@ -172,8 +172,7 @@
           username: '',
           password: '',
           re_password: '',
-          email: '',
-          gender: '', //1 男生 2女生 
+          email: ''
         },
         registerFormRules: {
           username: [
@@ -188,15 +187,15 @@
           email: [
             { required: true, message: 'Please input your email', trigger: 'blur' },
             { type: 'email', message: 'Please enter the correct email address', trigger: ['blur'] }
-          ],
-          gender: [
-            { required: true, message: 'Just choose one', trigger: 'blur' }
           ]
         }
       }
     },
     mounted () {
-      document.getElementsByTagName('body')[0].style.backgroundColor = '#697699'
+      document.getElementsByTagName('body')[0].style.backgroundColor = '#697699';
+      this.$once('hook:beforeDestroy', () => {
+        document.getElementsByTagName('body')[0].style.backgroundColor = '#ffffff';
+      })
     },
     methods: {
       toggleType() {
@@ -225,9 +224,8 @@
               name: this.loginForm.username,
               password: this.loginForm.password
             }).then(res=> {
-              console.log(res)
-              if (res.data.code == 0) {
-                localStorage.setItem('token', res.data.data.token)
+              if (res.code == 0) {
+                localStorage.setItem('token', res.data.token)
                 this.$router.push('/')
               }
             })
@@ -238,7 +236,13 @@
         this.$refs.registerForm.validate(valid => {
           if (valid) {
             this.$axios.post('/signup',this.registerForm).then(res=>{
-              console.log(res)
+              if (res.code == 0) {
+                this.$message.closeAll()
+                this.$message.success('注册成功')
+              } else {
+                this.$message.closeAll()
+                this.$message.error(res.message)
+              }
             })
           }
         })
@@ -264,7 +268,9 @@
   height: 100vh;
 }
 .login-container {
-  width: 1100px;
+  max-width: 1100px;
+  min-width: 310px;
+  width: 80%;
   height: 660px;
   margin: 0 auto;
   overflow: hidden;
@@ -276,7 +282,8 @@
     $leftLogoContWidth: 500px;
     height: 100%;
     .left-logo-cont {
-      width: $leftLogoContWidth;
+      max-width: $leftLogoContWidth;
+      width: 40%;
       height: 100%;
       position: relative;
       &::before {
@@ -292,7 +299,7 @@
       }
     }
     .right-container {
-      width: calc(100% - 500px);
+      width: calc(100% - 40%);
       height: 100%;
       position: relative;
       &::before {
@@ -349,6 +356,30 @@
         }
       }
     }
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .login-container {
+    .left-logo-cont {
+      display: none;
+    }
+    .right-container {
+      flex-grow: 1;
+      &::before {
+        transform: rotate(0) !important;
+      }
+    }
+  }
+}
+@media screen and (max-width: 320px) {
+  .login-container {
+    margin: 0;
+  }
+}
+@media screen and (max-width: 450px) {
+  .login-container {
+    width: 90%
   }
 }
 </style>
