@@ -227,6 +227,9 @@
               if (res.code == 0) {
                 localStorage.setItem('token', res.data.token)
                 this.$router.push('/')
+              } else {
+                this.$message.closeAll()
+                this.$message.success(res.msg)
               }
             })
           }
