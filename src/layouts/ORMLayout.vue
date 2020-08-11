@@ -5,7 +5,7 @@
     </div>
     <div class="orm-layout-container">
       <div class="container-left-nav">
-
+        <left-menu></left-menu>
       </div>
       <div class="container-right-content">
 
@@ -19,8 +19,9 @@
 
 <script>
 import HeaderMenu from './components/HeaderMenu'
+import LeftMenu from './components/leftMenu'
 export default {
-  components: {HeaderMenu}
+  components: {HeaderMenu, LeftMenu}
 }
 </script>
 
