@@ -7,8 +7,13 @@ import '@/assets/css/global.scss'
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import request from './utils/request'
+import './assets/js/tweenMax/TweenMax.min.js'
 
+// eslint-disable-next-line no-undef
+console.log(TimelineMax)
 Vue.prototype.$axios = request;
+// eslint-disable-next-line no-undef
+Vue.prototype.$timelineMax = TimelineMax
 
 Vue.use(ElementUI)
 
