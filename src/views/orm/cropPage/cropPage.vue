@@ -20,7 +20,10 @@
       </div>
     </div>
     <div class="compress-crop">
-      <el-button type="primary">裁剪图片</el-button>
+      <div>
+        <el-button type="primary" @click="cropVisible = true">裁剪图片</el-button>
+      </div>
+      <qg-crop-dialog :visible="cropVisible" @cancal="handleCloseCropDialog"></qg-crop-dialog>
     </div>
  
   </div>
@@ -34,7 +37,8 @@
         imgType:false,
         pointX:0,
         pointY:0,
-        canvasStyle:{}
+        canvasStyle:{},
+        cropVisible: false
       }
     },
     methods:{
@@ -122,10 +126,19 @@
           this.$refs.img.style.clip = `rect(${top}px,${right}px,${bottom}px,${left}px)`;
         }
       },
+      handleCloseCropDialog () {
+        this.cropVisible = false
+      }
  
     }
   }
 </script>
+
+<style lang="scss" scoped>
+.compress-crop {
+  margin-top: 20px;
+}
+</style>
  
 <style scoped>
   .canvasDiv{

@@ -1,9 +1,11 @@
 import QgFormItem from './packages/QgFormItem';
 import QgInput from './packages/QgInput'
+import QgCropDialog from './packages/QgCropDialog'
 
 const components = [
   QgFormItem,
-  QgInput
+  QgInput,
+  QgCropDialog
 ]
 
 const install = function(Vue) {
