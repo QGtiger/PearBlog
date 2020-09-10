@@ -1,20 +1,19 @@
 <template>
   <div class="left-menu-cont">
-    <!-- SVG Sprite -->
-	<div style="height: 0; width: 0; position: absolute; visibility: hidden;" aria-hidden="true">
-		<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" focusable="false">
-			<symbol id="ripply-scott" viewBox="0 0 100 100">
-				<circle id="ripple-shape" cx="1" cy="1" r="1" />
-			</symbol>
-		</svg>
-	</div>
-	<!-- /end sprite -->
     <div class="left-main-menu">
+      <!-- SVG Sprite -->
+      <div style="height: 0; width: 0; position: absolute; visibility: hidden;" aria-hidden="true">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" focusable="false">
+          <symbol id="ripply-scott" viewBox="0 0 100 100">
+            <circle id="ripple-shape" cx="1" cy="1" r="1" />
+          </symbol>
+        </svg>
+      </div>
       <ul class="left-aside">
         <li
           v-for="(item,index) in leftMenu"
           :key="'leftMain'+index"
-          :class="{'active-item': currentPath === item.path}"
+          :class="{'active-item': $route.matched.some(x => x.path === item.path)}"
           class="nav-item"
         >
         <router-link :to="item.path">
@@ -39,8 +38,12 @@ export default {
       currentPath: '' //当前 path
     }
   },
+  watch: {
+    $route(to) {
+      this.currentPath = to.path
+    }
+  },
   mounted () {
-    console.log(this.$route.path)
     this.currentPath = this.$route.path
     let ripplyScott = this.handleRipplyScottInit()
     ripplyScott.init('.nav-item', 0.75);
@@ -117,6 +120,7 @@ $themeColor: #262f41;
     height: 100%;
     padding-top: 15px;
     background-color: $themeColor;
+    position: relative;
     .left-aside {
       li {
         transition: all .3s ease;

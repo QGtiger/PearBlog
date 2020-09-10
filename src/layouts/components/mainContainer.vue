@@ -30,5 +30,8 @@ export default {
   height: 100%;
   background-color: #191a21;
   box-sizing: border-box;
+  .router-view-content {
+    padding: 30px 0;
+  }
 }
 </style>
