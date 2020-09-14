@@ -23,7 +23,7 @@
       <div>
         <el-button type="primary" @click="cropVisible = true">裁剪图片</el-button>
       </div>
-      <qg-crop-dialog :visible="cropVisible" @cancal="handleCloseCropDialog"></qg-crop-dialog>
+      <qg-crop-dialog :visible="cropVisible" @cancel="handleCloseCropDialog"></qg-crop-dialog>
     </div>
  
   </div>
@@ -40,6 +40,8 @@
         canvasStyle:{},
         cropVisible: false
       }
+    },
+    mounted () {
     },
     methods:{
       //文件流导出
