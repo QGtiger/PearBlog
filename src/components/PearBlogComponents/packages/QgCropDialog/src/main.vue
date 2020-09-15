@@ -20,7 +20,7 @@
             <span v-if="cropImgSrc">
               <img :src="cropImgSrc" :style="{width: cropImgData.width+'px', height: cropImgData.height + 'px', display: 'none'}" alt="">
               <div class="crop-holder" ref="cropImgHolder" :style="{width: cropImgData.width+'px', height: cropImgData.height + 'px', position: 'relative', backgroundColor: 'white', top: cropHolderTop}">
-                <div class="crop-area" :style="{width: realCropWp.width + 'px', height: realCropWp.height + 'px',left: cropWpCoordinate.left + 'px', top: cropWpCoordinate.top + 'px', position: 'absolute'}">
+                <div class="crop-area" :style="{zIndex: 290,width: realCropWp.width + 'px', height: realCropWp.height + 'px',left: cropWpCoordinate.left + 'px', top: cropWpCoordinate.top + 'px', position: 'absolute'}">
                   <div class="crop-move">
                     <div class="crop-hline" :style="{position: 'absolute', opacity: '0.5',top: 0,}"></div>
                     <div class="crop-vline" :style="{position: 'absolute', opacity: '0.5',right: 0,}"></div>
@@ -28,10 +28,10 @@
                     <div class="crop-vline" :style="{position: 'absolute', opacity: '0.5',left: 0,}"></div>
                   </div>
                   <div class="crop-move crop-cursor">
-                    <div class="ord-n crop-hblock"></div>
-                    <div class="ord-e crop-vblock"></div>
-                    <div class="ord-s crop-hblock"></div>
-                    <div class="ord-w crop-vblock"></div>
+                    <div class="ord-n crop-hblock" @mousedown="mousedownEvent($event, 2, 'ne')"></div>
+                    <div class="ord-e crop-vblock" @mousedown="mousedownEvent($event, 2, 'ne')"></div>
+                    <div class="ord-s crop-hblock" @mousedown="mousedownEvent($event, 2, 'sw')"></div>
+                    <div class="ord-w crop-vblock" @mousedown="mousedownEvent($event, 2, 'sw')"></div>
                     <div class="ord-nw crop-block" @mousedown="mousedownEvent($event, 2, 'nw')"></div>
                     <div class="ord-ne crop-block" @mousedown="mousedownEvent($event, 2, 'ne')"></div>
                     <div class="ord-se crop-block" @mousedown="mousedownEvent($event, 2, 'se')"></div>
@@ -39,9 +39,29 @@
                     <div class="crop-tracker" @mousedown="mousedownEvent($event, 1)"></div>
                   </div>
                 </div>
-                <img :src="cropImgSrc" :style="{width: cropImgData.width+'px', height: cropImgData.height + 'px'}" alt="">
+                <div class="crop-track" :style="{width: '100%', height: '100%', position: 'absolute', zIndex: 100}"></div>
+                <img :src="cropImgSrc" :style="{width: cropImgData.width+'px', height: cropImgData.height + 'px', zIndex: -1}" alt="">
               </div>
             </span>
+          </div>
+        </div>
+        <div class="right-preview-cont">
+          <h4>预览</h4>
+          <div class="preview-contlist">
+            <div class="wrap-item-cont">
+              <div class="preview-item-cont" :style="{
+                width: `${previewImgData1.wpW}px`,
+                height: previewImgData1.wpW / realCropWp.currentProportion + 'px'
+                }">
+                <img :src="cropImgSrc" :style="{
+                  width: previewImgData1.w+'px', 
+                  height: previewImgData1.h + 'px',
+                  marginLeft: `${previewImgData1.ml}px`,
+                  marginTop: `${previewImgData1.mt}px`,
+                  zIndex: -1
+                }" alt="">
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -91,7 +111,7 @@ export default {
         height: 0,
         currentProportion: 1
       },
-      proportionList: [2.35, 1],
+      proportionList: [1, 2.35],
       imgLoad: null,
       isClickMove: false, // 是否点击移动
       mouseDownCoordinate: {  // 鼠标点击x，y
@@ -112,8 +132,19 @@ export default {
       isClickResize: false, // 是否是resize 裁剪框
       movedirective: '', // 鼠标移动方向
       minWidth: 10,
-      minHeight: 10
+      minHeight: 10,
+      resizeTimer: null,
+      previewImgData1: {
+        ml: 0,
+        mt: 0,
+        w: 0,
+        h: 0,
+        wpW: 120,
+        scale: 0
+      }
     }
+  },
+  watch: {
   },
   mounted() {
     let _this = this
@@ -127,15 +158,32 @@ export default {
     }
     document.body.addEventListener('mousemove', this.mouseMoveEvent)
     document.body.addEventListener('mouseup', this.mouseUpEvent)
+    window.addEventListener('resize', this.debounce(this.handleResizeCropImgData, 700))
     this.$once('hook:beforeDestroy', function () {
       document.body.removeEventListener('mousemove', this.mouseMoveEvent)
       document.body.removeEventListener('mouseup', this.mouseUpEvent)
+      window.removeEventListener('resize', this.debounce(this.handleResizeCropImgData, 700))
     })
   },
   methods: {
     handleCancel () {
       console.log('cancel')
       this.$emit('cancel')
+    },
+    debounce (func, timeout) {
+      let timer
+      return () => {
+        clearTimeout(timer)
+        timer = setTimeout(func, timeout)
+      }
+    },
+    handleResizeCropImgData() {
+      let _this = this
+      if (!_this.$refs.cropImgHolder) return
+      console.log(400)
+      let clientRect = _this.$refs.cropImgHolder.getBoundingClientRect()
+      _this.cropImgData.x = clientRect.x
+      _this.cropImgData.y = clientRect.y
     },
     handleInitCropImgData () {
       let _this = this
@@ -176,11 +224,32 @@ export default {
       _this.originialWpCoordinate.left = (cw - rw) / 2
       _this.originialWpCoordinate.width = rw
       _this.originialWpCoordinate.height = rh
+      // 初始化预览
+      _this.previewImgData1.w = _this.previewImgData1.wpW * cw / rw
+      _this.previewImgData1.h = _this.previewImgData1.w * oh / ow
+      _this.previewImgData1.scale = rw / _this.previewImgData1.wpW
+      _this.previewImgData1.ml = -(_this.originialWpCoordinate.left / _this.previewImgData1.scale)
+      _this.previewImgData1.mt = -(_this.originialWpCoordinate.top / _this.previewImgData1.scale)
       _this.$nextTick(() => {
         console.log(_this.$refs.cropImgHolder.getBoundingClientRect())
         let clientRect = _this.$refs.cropImgHolder.getBoundingClientRect()
         _this.cropImgData.x = clientRect.x
         _this.cropImgData.y = clientRect.y
+      })
+    },
+    handleInitPreviewItem () {
+      let _this = this
+      requestAnimationFrame (function() {
+        let cw = _this.cropImgData.width
+        let rw = _this.realCropWp.width
+        let ow = _this.originialImgData.width // 原始图片 w
+        let oh = _this.originialImgData.height // 原始图片 h
+        let scale = rw / _this.previewImgData1.wpW
+        _this.previewImgData1.w = _this.previewImgData1.wpW * cw / rw
+        _this.previewImgData1.h = _this.previewImgData1.w * oh / ow
+        _this.previewImgData1.scale = scale
+        _this.previewImgData1.ml = -(_this.originialWpCoordinate.left / scale)
+        _this.previewImgData1.mt = -(_this.originialWpCoordinate.top / scale)
       })
     },
     handleChangeFile (event) {
@@ -266,27 +335,23 @@ export default {
               _this.cropWpCoordinate.top = _this.cropImgData.height - _this.realCropWp.height
             }
           }
+          let cw = _this.cropImgData.width
+          let rw = _this.realCropWp.width
+          let ow = _this.originialImgData.width // 原始图片 w
+          let oh = _this.originialImgData.height // 原始图片 h
+          let scale = rw / _this.previewImgData1.wpW
+          _this.previewImgData1.w = _this.previewImgData1.wpW * cw / rw
+          _this.previewImgData1.h = _this.previewImgData1.w * oh / ow
+          _this.previewImgData1.scale = scale
+          _this.previewImgData1.ml = -(_this.originialWpCoordinate.left / scale)
+          _this.previewImgData1.mt = -(_this.originialWpCoordinate.top / scale)
+          // _this.handleInitPreviewItem()
         })
       } else if (this.isClickResize) {
-        let mouseMoveXLength = currentX - currentMouseDownX // 当前鼠标x轴移动 长度
-        let mouseMoveYLength = currentY - currentMouseDownY // 当前鼠标x轴移动 长度
-        let rw // 裁剪框width
-        let rh // 裁剪框 height
-        let rp = _this.realCropWp.currentProportion // 当前比例
-        let ct // cropWpCoordinate.top
-        let cl // cropWpCoordinate.left
-        let ot = _this.originialWpCoordinate.top
-        let ol = _this.originialWpCoordinate.left
-        let ow = _this.originialWpCoordinate.width
-        let oh = _this.originialWpCoordinate.height
         let cropImgX = _this.cropImgData.x
         let cropImgY = _this.cropImgData.y
         let cropImgWidth = _this.cropImgData.width
         let cropImgHeight = _this.cropImgData.height
-        let moveW
-        let moveH
-        let mW = _this.minWidth
-        let mH =_this.minHeight
         let centerPointer = {x:0,y:0} // 中心点
         let currentEvent = {
           x: currentX,
@@ -299,152 +364,151 @@ export default {
           bottom: cropImgY + cropImgHeight
         }
         _this.requestAnimationFrameId = requestAnimationFrame(function() {
+          let ot = _this.originialWpCoordinate.top
+          let ol = _this.originialWpCoordinate.left
+          let ow = _this.originialWpCoordinate.width
+          let oh = _this.originialWpCoordinate.height
           if (_this.movedirective === 'ne') {
             centerPointer = {
               x: ol + cropImgX,
               y: ot + oh + cropImgY
             }
-            if (currentX > centerPointer.x && currentY < centerPointer.y) {
-              moveW = Math.abs(currentX - centerPointer.x)
-              moveH = Math.abs(centerPointer.y - currentY)
-              if (moveH > moveW) {
-                rh = moveH
-                rw = rh * rp
-              } else {
-                rw = moveW
-                rh = rw / rp
-              }
-              ct = centerPointer.y - rh - cropImgY
-              cl = ol
+            if (currentX >= centerPointer.x && currentY <= centerPointer.y) {
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, false)
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
+              return
             }
           } else if (_this.movedirective === 'se') {
             centerPointer = {
               x: ol + cropImgX,
-              y: ot + cropImgY
+              y: ot + cropImgY,
+              cropImgX: cropImgX,
+              cropImgY,
+              ol,
+              ot
             }
-            if (currentX > centerPointer.x && currentY > centerPointer.y) {
-              moveW = Math.abs(currentX - centerPointer.x)
-              moveH = Math.abs(centerPointer.y - currentY)
-              if (moveH > moveW) {
-                rh = moveH
-                rw = rh * rp
-              } else {
-                rw = moveW
-                rh = rw / rp
-              }
-              ct = ot
-              cl = ol
+            if (currentX >= centerPointer.x && currentY >= centerPointer.y) {
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, false)
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
+              return
             }
           } else if (_this.movedirective === 'sw') {
             centerPointer = {
               x: ol + cropImgX + ow,
               y: ot + cropImgY
             }
-            if (currentX < centerPointer.x && currentY > centerPointer.y) {
-              moveW = Math.abs(currentX - centerPointer.x)
-              moveH = Math.abs(centerPointer.y - currentY)
-              if (moveH > moveW) {
-                rh = moveH
-                rw = rh * rp
-              } else {
-                rw = moveW
-                rh = rw / rp
-              }
-              ct = ot
-              cl = ol + ow - rw
+            if (currentX <= centerPointer.x && currentY >= centerPointer.y) {
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, false)
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
+              return
             }
           } else if (_this.movedirective === 'nw') {
             centerPointer = {
               x: ol + cropImgX + ow,
               y: ot + cropImgY + oh
             }
-            if (currentX < centerPointer.x && currentY < centerPointer.y) {
-              moveW = Math.abs(currentX - centerPointer.x)
-              moveH = Math.abs(centerPointer.y - currentY)
-              if (moveH > moveW) {
-                rh = moveH
-                rw = rh * rp
-              } else {
-                rw = moveW
-                rh = rw / rp
-              }
-              ct = ot + oh - rh
-              cl = ol + ow - rw
+            if (currentX <= centerPointer.x && currentY <= centerPointer.y) {
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, false)
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
+              _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
+              return
             }
           }
-          // if (_this.movedirective === 'ne') {
-          //   centerPointer = {
-          //     x: ol + cropImgX,
-          //     y: ot + oh + cropImgY
-          //   }
-          //   moveW = Math.abs(currentX - centerPointer.x)
-          //   moveH = Math.abs(centerPointer.y - currentY)
-          //   if (currentX <= cropWpContainer.right && currentY <= cropWpContainer.top) {
-          //     finalCropWidth = cropWpContainer.right - centerPointer.x
-          //   }
-          // } else if (_this.movedirective === 'se') {
-          //   centerPointer = {
-          //     x: ol + cropImgX,
-          //     y: ot + cropImgY
-          //   }
-          // } else if (_this.movedirective === 'sw') {
-          //   centerPointer = {
-          //     x: ol + cropImgX + ow,
-          //     y: ot + cropImgY
-          //   }
-          // } else if (_this.movedirective === 'nw') {
-          //   centerPointer = {
-          //     x: ol + cropImgX + ow,
-          //     y: ot + cropImgY + oh
-          //   }
-          // }
-
-          
-          // if (currentX >= cropImgX + cropImgWidth) {
-          //   currentX = cropImgX + cropImgWidth
-          // } else if (currentX <= cropImgX) {
-          //   currentX = cropImgWidth
-          // }
-          // if (currentY >= cropImgY + cropImgHeight) {
-          //   currentY = cropImgY + cropImgHeight
-          // } else if (currentY <= cropImgY) {
-          //   currentY = cropImgY
-          // }
-          // moveW = Math.abs(currentX - centerPointer.x)
-          // moveH = Math.abs(centerPointer.y - currentY)
-          // if (moveW >= mW && moveH >= mH) {
-          //   if (moveW > moveH) {
-          //     rw = moveW
-          //     rh = rw / rp
-          //   } else {
-          //     rw = moveW
-          //     rh = rw / rp
-          //   }
-          // }
-
-          // if (_this.movedirective === 'ne') {
-          //   ct = ot + oh - rh
-          // } else if (_this.movedirective === 'sw') {
-          //   cl = ol + ow - rw
-          // } else if (_this.movedirective === 'nw') {
-          //   cl = ol + ow - rw
-          //   ct = ot + oh - rh
-          // }
-
-          if (rw) _this.realCropWp.width = rw
-          if (rh) _this.realCropWp.height = rh
-          if (ct) _this.cropWpCoordinate.top = ct
-          if (cl) _this.cropWpCoordinate.left = cl
         })
       }
+    },
+    handleInitCropWpContainer (centerPointer, currentEvent, currentDirective, isChangeQuadrant) { //isChangeQuadrant 是否切换象限
+      let _this = this
+      let rh
+      let rw
+      let ct
+      let cl
+      let rp = _this.realCropWp.currentProportion
+      let cropImgX = _this.cropImgData.x
+      let cropImgY = _this.cropImgData.y
+      let moveW = Math.abs(currentEvent.x - centerPointer.x)
+      let moveH = Math.abs(centerPointer.y - currentEvent.y)
+      if (moveH > moveW) {
+        rh = moveH
+        rw = rh * rp
+      } else {
+        rw = moveW
+        rh = rw / rp
+      }
+      [rw, rh] = _this.handleInitCropWpProportion(centerPointer, currentEvent, rw, rh)
+      if (currentDirective === 'ne') {
+        ct = centerPointer.y - rh - cropImgY
+        cl = centerPointer.x - cropImgX
+      } else if (currentDirective === 'se') {
+        ct = centerPointer.y - cropImgY
+        cl = centerPointer.x - cropImgX
+      } else if (currentDirective === 'sw') {
+        ct = centerPointer.y - cropImgY
+        cl = centerPointer.x - rw - cropImgX
+      } else if (currentDirective === 'nw') {
+        ct = centerPointer.y - rh - cropImgY
+        cl = centerPointer.x - rw - cropImgX
+      }
+      if (rw) _this.realCropWp.width = rw
+      if (rh) _this.realCropWp.height = rh
+      if (ct) _this.cropWpCoordinate.top = ct
+      if (cl) _this.cropWpCoordinate.left = cl
+      if (isChangeQuadrant) {
+        _this.originialWpCoordinate.width = rw
+        _this.originialWpCoordinate.height = rh
+        _this.originialWpCoordinate.top = ct
+        _this.originialWpCoordinate.left = cl
+      }
+    },
+    handleInitCropWpProportion(centerPointer, currentEvent, rw, rh) {
+      let _this = this
+      let cropImgX = _this.cropImgData.x
+      let cropImgY = _this.cropImgData.y
+      let cw = _this.cropImgData.width
+      let ch = _this.cropImgData.height
+      let wpWidth
+      let wpHeight
+      let rp = _this.realCropWp.currentProportion
+      let maxE = cropImgX+cw-centerPointer.x // x 轴正方向
+      let maxN = centerPointer.y-cropImgY // y 轴负方向
+      let maxS = cropImgY+ch-centerPointer.y // y 正方向
+      let maxW = centerPointer.x-cropImgX // x 负方向
+      if (_this.movedirective === 'ne') {
+        wpWidth = maxE
+        wpHeight = maxN
+      } else if (_this.movedirective === 'se') {
+        wpWidth = maxE
+        wpHeight = maxS
+      } else if (_this.movedirective === 'sw') {
+        wpWidth = maxW
+        wpHeight = maxS
+      } else if (_this.movedirective === 'nw') {
+        wpWidth = maxW
+        wpHeight = maxN
+      }
+      if (wpWidth === 0 || wpHeight === 0) {
+        return [0, 0]
+      }
+      let quadrantPorprotion = wpWidth / wpHeight
+      if (quadrantPorprotion < rp) {
+        if (rw >= wpWidth) {
+          rw = wpWidth
+          rh = rw / rp
+        }
+      } else {
+        if (rh >= wpHeight) {
+          rh = wpHeight
+          rw = rh * rp
+        }
+      }
+      return [rw, rh]
     },
     handleInitDirective(center, event) {
       console.log(center,event)
@@ -473,8 +537,6 @@ export default {
           _this.isClickMove = false
           let lastX = _this.originialWpCoordinate.left + currentX - currentMouseDownX
           let lastY = _this.originialWpCoordinate.top + currentY - currentMouseDownY
-
-          cancelAnimationFrame(_this.requestAnimationFrameId)
           let finalLeft
           let finalTop
           if (lastX >= 0 && lastX + _this.realCropWp.width <= _this.cropImgData.width) {
@@ -504,7 +566,6 @@ export default {
       } else if (this.isClickResize) {
         this.isClickResize = false
         _this.requestAnimationFrameId = requestAnimationFrame(function() {
-          cancelAnimationFrame(_this.requestAnimationFrameId)
           _this.originialWpCoordinate.width = _this.realCropWp.width
           _this.originialWpCoordinate.height = _this.realCropWp.height
           _this.originialWpCoordinate.top = _this.cropWpCoordinate.top
@@ -529,7 +590,7 @@ export default {
     border-top: 1px solid #ccc;
     .left-cropper-cont {
       width: 280px;
-      margin-right: 15px;
+      margin-right: 35px;
       flex-grow: 0;
       flex-shrink: 0;
       text-align: center;
@@ -643,6 +704,19 @@ export default {
               cursor: move;
               z-index: 360;
             }
+          }
+        }
+      }
+    }
+    .right-preview-cont {
+      .preview-contlist {
+        .wrap-item-cont {
+          display: flex;
+          .preview-item-cont {
+            margin-right: 25px;
+            flex-grow: 0;
+            flex-shrink: 0;
+            overflow: hidden;
           }
         }
       }
