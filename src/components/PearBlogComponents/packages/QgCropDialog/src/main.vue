@@ -90,7 +90,7 @@ export default {
   },
   data () {
     return {
-      cropImgData: { // 处理后的图片缩放显示大小
+      cropImgData: { // 处理后的图片缩放显示大小, 这里的x，y 是 图片的相对于屏幕的 x，y值
         width: 0,
         height: 0,
         x: 0,
@@ -118,7 +118,7 @@ export default {
         x: 0,
         y: 0
       },
-      cropWpCoordinate: { // 裁剪框坐标
+      cropWpCoordinate: { // 裁剪框坐标   注意 这是 记录鼠标移动端 坐标
         left: 0,
         top: 0
       },
@@ -239,18 +239,15 @@ export default {
     },
     handleInitPreviewItem () {
       let _this = this
-      requestAnimationFrame (function() {
-        let cw = _this.cropImgData.width
-        let rw = _this.realCropWp.width
-        let ow = _this.originialImgData.width // 原始图片 w
-        let oh = _this.originialImgData.height // 原始图片 h
-        let scale = rw / _this.previewImgData1.wpW
-        _this.previewImgData1.w = _this.previewImgData1.wpW * cw / rw
-        _this.previewImgData1.h = _this.previewImgData1.w * oh / ow
-        _this.previewImgData1.scale = scale
-        _this.previewImgData1.ml = -(_this.originialWpCoordinate.left / scale)
-        _this.previewImgData1.mt = -(_this.originialWpCoordinate.top / scale)
-      })
+      let cw = _this.cropImgData.width
+      let ch = _this.cropImgData.height
+      let rw = _this.realCropWp.width
+      let scale = rw / _this.previewImgData1.wpW
+      _this.previewImgData1.w = _this.previewImgData1.wpW * cw / rw
+      _this.previewImgData1.h = _this.previewImgData1.w * ch / cw
+      _this.previewImgData1.scale = scale
+      _this.previewImgData1.ml = -(_this.cropWpCoordinate.left / scale)
+      _this.previewImgData1.mt = -(_this.cropWpCoordinate.top / scale)
     },
     handleChangeFile (event) {
       let _this = this
@@ -335,33 +332,16 @@ export default {
               _this.cropWpCoordinate.top = _this.cropImgData.height - _this.realCropWp.height
             }
           }
-          let cw = _this.cropImgData.width
-          let rw = _this.realCropWp.width
-          let ow = _this.originialImgData.width // 原始图片 w
-          let oh = _this.originialImgData.height // 原始图片 h
-          let scale = rw / _this.previewImgData1.wpW
-          _this.previewImgData1.w = _this.previewImgData1.wpW * cw / rw
-          _this.previewImgData1.h = _this.previewImgData1.w * oh / ow
-          _this.previewImgData1.scale = scale
-          _this.previewImgData1.ml = -(_this.originialWpCoordinate.left / scale)
-          _this.previewImgData1.mt = -(_this.originialWpCoordinate.top / scale)
-          // _this.handleInitPreviewItem()
+          
+          _this.handleInitPreviewItem()
         })
       } else if (this.isClickResize) {
         let cropImgX = _this.cropImgData.x
         let cropImgY = _this.cropImgData.y
-        let cropImgWidth = _this.cropImgData.width
-        let cropImgHeight = _this.cropImgData.height
         let centerPointer = {x:0,y:0} // 中心点
         let currentEvent = {
           x: currentX,
           y: currentY
-        }
-        let cropWpContainer = {
-          top: cropImgY,
-          left: cropImgX,
-          right: cropImgX + cropImgWidth,
-          bottom: cropImgY + cropImgHeight
         }
         _this.requestAnimationFrameId = requestAnimationFrame(function() {
           let ot = _this.originialWpCoordinate.top
@@ -378,7 +358,6 @@ export default {
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
               _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
-              return
             }
           } else if (_this.movedirective === 'se') {
             centerPointer = {
@@ -394,7 +373,6 @@ export default {
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
               _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
-              return
             }
           } else if (_this.movedirective === 'sw') {
             centerPointer = {
@@ -406,7 +384,6 @@ export default {
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
               _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
-              return
             }
           } else if (_this.movedirective === 'nw') {
             centerPointer = {
@@ -418,9 +395,9 @@ export default {
             } else {
               _this.handleInitDirective(centerPointer, currentEvent)
               _this.handleInitCropWpContainer(centerPointer, currentEvent, _this.movedirective, true)
-              return
             }
           }
+          _this.handleInitPreviewItem()
         })
       }
     },
@@ -535,6 +512,7 @@ export default {
       if (this.isClickMove) {
         requestAnimationFrame(function() {
           _this.isClickMove = false
+          if (_this.requestAnimationFrameId) cancelAnimationFrame(_this.requestAnimationFrameId)
           let lastX = _this.originialWpCoordinate.left + currentX - currentMouseDownX
           let lastY = _this.originialWpCoordinate.top + currentY - currentMouseDownY
           let finalLeft
