@@ -8,6 +8,11 @@ import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import request from './utils/request'
 import './assets/js/tweenMax/TweenMax.min.js'
+import '@/assets/js/jquery/jquery.min.js'
+import '@/assets/js/jcrop/jquery.Jcrop.js'
+
+// eslint-disable-next-line no-undef
+console.log(jQuery)
 
 // eslint-disable-next-line no-undef
 console.log(TimelineMax)
