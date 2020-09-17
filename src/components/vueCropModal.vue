@@ -131,6 +131,15 @@ export default {
     handleClickUpload () {
       this.$refs.fileEle.dispatchEvent(new MouseEvent('click'))
     },
+    dataURLtoBlob (dataurl) {
+      var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      console.log(new Blob([u8arr], { type: mime }))
+      return URL.createObjectURL(new Blob([u8arr], { type: mime }));
+    },
     handleChangeFile (event) {
       let _this = this
       let inputEle = event.currentTarget
@@ -142,8 +151,8 @@ export default {
       let reader = new FileReader();
       //读取文件流
       reader.onload = (evt)=>{
-        _this.imgLoad.src= evt.target.result
-        _this.cropImgSrc = evt.target.result
+        _this.imgLoad.src= _this.dataURLtoBlob(evt.target.result)
+        _this.cropImgSrc = _this.dataURLtoBlob(evt.target.result)
         /*
         this.$refs.img.src相当于对img节点的src属性操作
         evt.target.result为图片文件装换的base64编码
