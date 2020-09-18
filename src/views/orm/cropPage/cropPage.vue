@@ -77,6 +77,7 @@ export default {
             this.$refs.canvas.width = imgDOM.offsetWidth * 2;
             this.$refs.canvas.height = imgDOM.offsetHeight * 2;
             //画背后canvas
+            console.log(myImg)
             this.$refs.canvas.getContext('2d').drawImage(myImg,0,0, imgDOM.offsetWidth * 2 , imgDOM.offsetHeight * 2 ,);
           }
           myImg.src = evt.target.result;
